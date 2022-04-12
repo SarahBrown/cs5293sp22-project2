@@ -1,0 +1,45 @@
+# cs5293sp22-project2
+
+### Author: Sarah Brown
+
+# Directions to Install and Use Package
+To download and use package, follow the steps below:
+
+1. git clone https://github.com/SarahBrown/cs5293sp22-project1.git
+2. cd cs5293sp22-project1/
+3. pipenv install
+
+
+5. 
+pipenv run python project2.py --N 5 --ingredient paprika \
+                                    --ingredient banana \
+                                    --ingredient 'rice krispies'
+
+
+
+# Web or External Libraries
+
+
+# Functions and Approach to Development
+* Train (or index for search) food data in provided dataset
+* Input ingredients and then use model (or search) to predict type of cuisine and return result
+** cuisine distance
+* Find the top-N closest foods. Return their IDs (if no ID associated can assign arbitrarily)
+** top-N and their distances
+
+## Model vs. Search
+### First Approach: Indexed Search
+
+
+## Calculate distances
+
+## Functions
+
+
+# Assumptions Made and Known Bugs
+## Known Bugs
+
+
+# Tests
+Tests are performed with PyTest and local data. Tests are also set up with Github Actions and PyTest to run automatically when code is pushed to the repository. 
+
