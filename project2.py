@@ -27,17 +27,59 @@ def process_dataset():
     """Function to BLAH."""
     # load yummly dataset
     yummy_json = load_dataset()
+    num_recipes = len(yummy_json)
 
     cuisines = {}
-    print(yummy_json[0])
     for recipe in yummy_json:
-        cuisines
+        rec_cuisine = recipe["cuisine"]
+        rec_ingredients = recipe["ingredients"]
+
+        # adds cuisine to cuisine dict if it was not in dict already
+        if rec_cuisine not in cuisines.keys():
+            cuisines[rec_cuisine] = {}
+        
+        # loops through recipe's ingredients
+        for ingred in rec_ingredients:
+            # adds ingredient to individual cuisine dict if it was not in dict already
+            if ingred not in cuisines[rec_cuisine].keys():
+                cuisines[rec_cuisine][ingred] = 1 # sets specific ingredient to 1 
+            else:
+                cuisines[rec_cuisine][ingred] = cuisines[rec_cuisine][ingred] + 1 # incrememnts ingredient ammount
+
+    for cuisine_key in cuisines.keys():
+        for ingred in cuisines[cuisine_key].keys():
+            cuisines[cuisine_key][ingred] = cuisines[cuisine_key][ingred]/num_recipes
+
+    return cuisines
+
+def fuzzy_ingred_match():
+    pass
 
 
 """Uses search to predict cuisine and find N-closest foods"""
 # gets arguments passed in via argparse
 args = add_arguments()
-print(args)
+input_ingred = args.ingredient
+input_N = args.N
 
 # creates database for searching
-process_dataset()
+cuisines = process_dataset()
+
+best_cuisine = None
+best_score = 0
+sum = 0
+for cuisine_key in cuisines.keys():
+    print(f"----------{cuisine_key}----------")
+    print(f"{input_ingred[0]}--{cuisines[cuisine_key].get(input_ingred[0])}")
+    print(f"{input_ingred[1]}--{cuisines[cuisine_key].get(input_ingred[1])}")
+    print(f"{input_ingred[2]}--{cuisines[cuisine_key].get(input_ingred[2])}")
+    print(f"------------------------------")
+    cur_score = (cuisines[cuisine_key].get(input_ingred[0]) or 0) + (cuisines[cuisine_key].get(input_ingred[1]) or 0) + (cuisines[cuisine_key].get(input_ingred[2]) or 0)
+    sum = sum + cur_score 
+    if cur_score > best_score:
+        best_score = cur_score
+        best_cuisine = cuisine_key
+
+print(best_cuisine)
+print(round((best_score/sum),2))
+
