@@ -5,8 +5,8 @@
 # Directions to Install and Use Package
 To download and use package, follow the steps below:
 
-1. git clone https://github.com/SarahBrown/cs5293sp22-project1.git
-2. cd cs5293sp22-project1/
+1. git clone https://github.com/SarahBrown/cs5293sp22-project2.git
+2. cd cs5293sp22-project2/
 3. pipenv install
 
 
@@ -18,7 +18,8 @@ pipenv run python project2.py --N 5 --ingredient paprika \
 
 
 # Web or External Libraries
-
+Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning
+  warnings.warn('Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning')
 
 # Functions and Approach to Development
 * Train (or index for search) food data in provided dataset

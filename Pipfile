@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 argparse = "*"
 pytest = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [dev-packages]
 
