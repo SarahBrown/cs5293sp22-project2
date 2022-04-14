@@ -41,7 +41,9 @@ Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove thi
 
 # Assumptions Made and Known Bugs
 ## Known Bugs
-
+['puffed rice', 58] rice kripsies prob not gonna match puffed rice however puffed rice only shows up in indian recipes so not the cereal????
+    strings3 = ["vegetable stock","vegetable broth","vegetables","pickled vegetables","vegetable juice","vegetable oil spray","mixed vegetables",
+                  "root vegetables","vegetable slaw","vegetable bouillon","vegetable gumbo","other vegetables","vegetable soup"]
 
 # Tests
 Tests are performed with PyTest and local data. Tests are also set up with Github Actions and PyTest to run automatically when code is pushed to the repository. 
