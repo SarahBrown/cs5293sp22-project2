@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import sys
 
 #external libraries
 from fuzzywuzzy import fuzz
@@ -69,16 +70,14 @@ def fuzzy_ingred_match(keys, input):
     for key in keys:
         ratio = fuzz.token_sort_ratio(key,input)
         if (ratio > 75):
-            first_matches.append([key, ratio])
-
+            first_matches.append(key)
 
     for match in first_matches:
         for key in keys:
-            ratio = fuzz.token_sort_ratio(key,match[0])
+            ratio = fuzz.token_sort_ratio(key,match)
             if (ratio > 75):
-                second_matches.append([key, ratio])
+                second_matches.append(key)
 
-    second_matches = sorted(second_matches, key=lambda x:x[1], reverse=True)
     return second_matches
 
 def find_closest_cuisine_ingreddict(args, json_model):
@@ -96,12 +95,12 @@ def find_closest_cuisine_ingreddict(args, json_model):
         else:
             matches = fuzzy_ingred_match(json_model.keys(), inp_ing)
             for match in matches:
-                matched_ing = match[0]
+                matched_ing = match
                 for cuisine in json_model[matched_ing]["cuisines_dict"]:
                     if cuisine in cuisine_scores:
                         cuisine_scores[cuisine] += json_model[matched_ing]["cuisines_dict"][cuisine]
                     else:
-                        cuisine_scores[cuisine] = json_model[inp_ing]["cuisines_dict"][cuisine]
+                        cuisine_scores[cuisine] = json_model[matched_ing]["cuisines_dict"][cuisine]
 
     # normalize cuisine scores
     sum_scores = 0
@@ -109,17 +108,68 @@ def find_closest_cuisine_ingreddict(args, json_model):
         sum_scores += cuisine_scores[cuisine_key]
 
     for cuisine_key in cuisine_scores.keys():
-        cuisine_scores[cuisine_key] = round((cuisine_scores[cuisine_key]/sum_scores),4)
+        cuisine_scores[cuisine_key] = round((cuisine_scores[cuisine_key]/sum_scores),2)
 
     # sort by score
-    scores_list = sorted(cuisine_scores.items(), key=lambda x:x[1], reverse=True)
-    for score in scores_list:
-        print(score)
+    scores_list = sorted(cuisine_scores.items(), key=lambda x:x[1], reverse=True) # sorted by score, highest to lowest
+    return (scores_list[0]) # returns top score
 
 
 def find_N_foods(args, json_model):
+    input_ingred = args.ingredient
+    yummy_json = load_json_file('yummly.json')
     N = args.N
+    closest_N = []
+    output = []
 
+    fuzzy_matches = input_ingred.copy()
+    for inp_ing in input_ingred:
+        matches = fuzzy_ingred_match(json_model.keys(), inp_ing)
+        for match in matches:
+            if match not in fuzzy_matches:
+                fuzzy_matches += matches
+    
+    for recipe in yummy_json:
+        rec_ingredients = recipe["ingredients"]
+        ingred_matches = set()
+
+        # checks for fuzzy matches for input ingredients in recipe's ingredients
+        for inp in fuzzy_matches:
+            if (inp in rec_ingredients):
+                ingred_matches.add(inp)
+
+        num_matches = len(ingred_matches)
+        if (num_matches > 0):
+            change_matches_recipe = count_changes_lists(ingred_matches, rec_ingredients)
+            change_matches_input = count_changes_lists(ingred_matches, input_ingred) # does not fuzzy match
+            change = change_matches_recipe + change_matches_input
+            if (change == 0):
+                score = 1
+            else:
+                score = round((1/change),2)
+            closest_N.append([recipe["id"], score]) # id, score            
+
+    closest_N = sorted(closest_N, key=lambda x:x[1], reverse=True) # sorted by score, highest to lowest
+    closest_N = closest_N[:N]
+    for close in closest_N:
+        output.append({"id":close[0], "score": close[1]})
+    return output
+            
+def count_changes_lists(list1, list2):
+    """Compares changes needed to make list1 into list2"""
+    inserts = 0
+    deletes = 0
+
+    for list1_ele in list1:
+        if (list1_ele not in list2):
+            deletes += 1
+    
+    for list2_ele in list2:
+        if (list2_ele not in list1):
+            inserts += 1
+    
+    change = inserts+deletes
+    return(change)
 """Uses search to predict cuisine and find N-closest foods"""
 # gets arguments passed in via argparse
 args = add_arguments()
@@ -131,4 +181,10 @@ args = add_arguments()
 json_model = load_json_file('model3.json')
 
 # find closest cuisine
-find_closest_cuisine_ingreddict(args, json_model)
+cuisine = find_closest_cuisine_ingreddict(args, json_model)
+# find closest N foods
+closest_N = find_N_foods(args, json_model)
+# format output
+output_dict = {"cuisine": cuisine[0],"score": cuisine[1], "closest": closest_N}
+# dump output to stdout 
+json.dump(output_dict, sys.stdout, indent = 2)
