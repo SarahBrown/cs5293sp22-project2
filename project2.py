@@ -102,33 +102,37 @@ def make_json_model():
 
 def find_closest_cuisine(args, json_model):
     input_ingred = args.ingredient
-    cuisine_scores = {}
+    cuisine_scores = {} # dictionary for cuisine scores
 
+    # loop through each ingredient entered via arguments
     for inp_ing in input_ingred:
-        if inp_ing in json_model.keys():
-            for cuisine in json_model[inp_ing]["cuisines_dict"]:
+        # checks to see if ingredient is in the model's keys
+        if inp_ing in json_model.keys(): 
+            # sums weights of ingredients per cuisine
+            for cuisine in json_model[inp_ing]["cuisines_dict"]: 
                 if cuisine in cuisine_scores:
                     cuisine_scores[cuisine] += json_model[inp_ing]["cuisines_dict"][cuisine]
                 else:
                     cuisine_scores[cuisine] = json_model[inp_ing]["cuisines_dict"][cuisine]
 
+        # checks for fuzzy matches if ingredient is not in the model's keys
         else:
-            matches = fuzzy_ingred_match(json_model.keys(), inp_ing)
+            matches = fuzzy_ingred_match(json_model.keys(), inp_ing) # gets fuzzy matches
             for match in matches:
-                matched_ing = match
-                for cuisine in json_model[matched_ing]["cuisines_dict"]:
+                # sums weights of ingredients per cuisine
+                for cuisine in json_model[match]["cuisines_dict"]:
                     if cuisine in cuisine_scores:
-                        cuisine_scores[cuisine] += json_model[matched_ing]["cuisines_dict"][cuisine]
+                        cuisine_scores[cuisine] += json_model[match]["cuisines_dict"][cuisine]
                     else:
-                        cuisine_scores[cuisine] = json_model[matched_ing]["cuisines_dict"][cuisine]
+                        cuisine_scores[cuisine] = json_model[match]["cuisines_dict"][cuisine]
 
     # normalize cuisine scores
     sum_scores = 0
     for cuisine_key in cuisine_scores.keys():
-        sum_scores += cuisine_scores[cuisine_key]
+        sum_scores += cuisine_scores[cuisine_key] # sums total across all cuisines
 
     for cuisine_key in cuisine_scores.keys():
-        cuisine_scores[cuisine_key] = round((cuisine_scores[cuisine_key]/sum_scores),2)
+        cuisine_scores[cuisine_key] = round((cuisine_scores[cuisine_key]/sum_scores),2) # calculates and rounds weight
 
     # sort by score
     scores_list = sorted(cuisine_scores.items(), key=lambda x:x[1], reverse=True) # sorted by score, highest to lowest
@@ -141,6 +145,7 @@ def find_N_foods(args, json_model):
     closest_N = []
     output = []
 
+    # gets fuzzy matches for the input ingredients from list of all ingredients and adds them to list to check
     fuzzy_matches = input_ingred.copy()
     for inp_ing in input_ingred:
         matches = fuzzy_ingred_match(json_model.keys(), inp_ing)
@@ -148,6 +153,7 @@ def find_N_foods(args, json_model):
             if match not in fuzzy_matches:
                 fuzzy_matches += matches
     
+    # loops through each recipe and finds how many matches there are
     for recipe in yummy_json:
         rec_ingredients = recipe["ingredients"]
         ingred_matches = set()
@@ -157,10 +163,12 @@ def find_N_foods(args, json_model):
             if (inp in rec_ingredients):
                 ingred_matches.add(inp)
 
+        # finds distance based on number of matches
         num_matches = len(ingred_matches)
         if (num_matches > 0):
-            change_matches_recipe = count_changes_lists(ingred_matches, rec_ingredients)
-            change_matches_input = count_changes_lists(ingred_matches, input_ingred) # does not fuzzy match
+            # calculates the differences between the ingredient matches and the recipes ingredients as well as all of the entered ingredients via arguments
+            change_matches_recipe = count_changes_lists(ingred_matches, rec_ingredients) 
+            change_matches_input = count_changes_lists(ingred_matches, input_ingred) # does not include fuzzy matches
             change = change_matches_recipe + change_matches_input
             if (change == 0):
                 score = 1

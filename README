@@ -50,10 +50,53 @@ This function takes two lists and counts how many insertions or deletions would 
 ### make_json_model()
 This function loops through each recipe in the yummly dataset and counts how many of each ingredient type there is. More specifically, how many of each ingredient exists for each cuisine type. By counting the number of ingredients, weights can then be assigned and added together to calculate the score of a specific set of ingredients passed in via the command line.
 
+This model is created and stored in a dictionary. By storing this model in a dictionary, it is easy to save out to a JSON file and then load back in to other functions. Saving the model allows it to be used without being created each time the python file is run. 
+
+This function loops through all of the recipes in the dataset. Per each recipe, it then loops over its ingredients. If the ingredient already exists in the ingredient dictionary, the ingredient's cuisine section is then incremented. In addition, the total ingredient count for that particular ingredient is incremented. If the ingredient does not exist in the dictionary, it is added and initialized.
+
+After each recipe has been included, the dictionary is then looped over again per ingredient and a weight is assigned. This weight is calculated as follows: (number of times ingredient shows up in cuisine)/(total number of recipes*number of times ingredient shows up in total). All of these weights are stored back in the ingredient dictionary and are saved to a JSON file.
+
+An example entry, if the ingredient dictionary only contained romaine lettuce, is shown below.
+{
+      "romaine lettuce": {
+            "cuisines_dict": {
+                  "greek": 7.0542449733078225e-06,
+                  "korean": 9.043903811933105e-07,
+                  "mexican": 1.8630441852582198e-05,
+                  "thai": 3.617561524773242e-06,
+                  "southern_us": 1.447024609909297e-06,
+                  "french": 2.1705369148639453e-06,
+                  "cajun_creole": 2.1705369148639453e-06,
+                  "italian": 5.968976515875849e-06,
+                  "vietnamese": 3.074927296057256e-06,
+                  "spanish": 7.235123049546485e-07,
+                  "indian": 5.426342287159863e-07,
+                  "chinese": 2.3514149911026074e-06,
+                  "irish": 1.8087807623866212e-07
+            },
+            "total_ingred_count": 139
+      }
+}
+
 ### find_closest_cuisine()
+This function uses the created model and the fuzzy_ingred_match function to find the closest cuisine match provided the ingredients entered as arguments. 
+
+To start, each input ingredient is looped over and is checked to see if an EXACT match exists in the JSON model keys. If an exact match is found, the weight assigned to this key is added to a score. This is done for each cuisine to determine which cuisine has the highest score when all of the weights are summed. 
+
+If an exact match is not found, the fuzzy_ingred_match function is then used. The model's keys are compared against the input ingredient. If a fuzzy match is found, the sum is then updated with its weight.
+
+After sums are calculated for each cuisine, the scores are normalized. The scores are normalized by adding up all of the sums for the different cuisines. The individual cuisine scores are then divided by this sum and the result is rounded to two decimal points. This list is then sorted by the cuisine score, highest to lowest. The top score is taken from this sorted list and is returned as the closest match for the cuisine of the entered ingredients.
 
 ### find_N_foods()
+This function is used to find the top N-closest foods to the entered ingredients based on an entered value for N. 
 
+This is done by taking the entered input ingredients and finding the fuzzy matches that are in the list of all of the yummly ingredients. This list comes from the created JSON model. By fuzzy matching this accounts for ingredients that might be entered in as variables differently than they are stored as ingredients in the yummly dataset.
+
+This list of matches is then taken and compared to the ingredients in the different recipes. If an input ingredient is in a recipe, that recipe is added to a set. If there are matches, the score is then calculated.
+
+This is done by comparing the list of matches found in the recipe to all of the recipe's ingredients. This is done with the count_changes_lists function mentioned previously. The matched ingredients are also compared to the input ingredients via the command line. This second comparison is not done with fuzzy matching. The two distances calculated via the count_changes_lists function are then added together.
+
+This value of change is double checked to make sure that it is not 0, for a perfect match, and then is inverted (1/change) and rounded to 2 decimal places. All of these scores for the various recipes with matching ingredients are then added to a list. This list is then sorted by score, highest to lowest. Finally, the top N-highest scores are filtered and returned.
 
 # Assumptions Made and Known Bugs
 Some ingredients I was unsure if they were technically fuzzy matches due to my cooking knowledge. For example, when finding how best to match rice krispies, rice krispies cereal, and crispy rice cereal, I found another ingredient called puffed rice. On investigation it turned out that the cuisines of all the recipes that contained puffed rice were Indian. It also appears based on google searches that puffed rice is different from rice krispies. However, there is no guarantee that there are some other ingredients in the model that will not fuzzy match to user input that should.
@@ -61,8 +104,12 @@ Some ingredients I was unsure if they were technically fuzzy matches due to my c
 There are no known bugs.
 
 # Tests
-Tests are performed with PyTest and local data. Tests are also set up with Github Actions and PyTest to run automatically when code is pushed to the repository. 
+Tests are performed with PyTest and local data. Tests are also set up with Github Actions and PyTest to run automatically when code is pushed to the repository.
+
+Due to the nature of the dataset, the majority of these test that used the provided dataset are regression tests to ensure that the code continues to work as expected. These values were confirmed by searching the dataset to confirm that the values made sense.
+
+Functions that compared lists (fuzzy_ingred_match, count_changes_lists) were tested with smaller lists that could be confirmed by hand. 
+
+load_json_file was tested to make sure that the model was loaded properly.
 
 make_json_model() is not tested as it is specified in the requirements that the model should be loaded and not created.
-
-## TEST THINGSSSSSSSSSSSSSS
