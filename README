@@ -8,43 +8,61 @@ To download and use package, follow the steps below:
 1. git clone https://github.com/SarahBrown/cs5293sp22-project2.git
 2. cd cs5293sp22-project2/
 3. pipenv install
-
-
-5. 
-pipenv run python project2.py --N 5 --ingredient paprika \
-                                    --ingredient banana \
-                                    --ingredient 'rice krispies'
-
-
+4. Run via pipenv with one of the following example commands:
+pipenv run python project2.py --N 5 --ingredient paprika --ingredient banana --ingredient 'rice krispies'
+pipenv run python project2.py --N 5 --ingredient 'country bread' --ingredient 'garlic'
 
 # Web or External Libraries
-Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning
-  warnings.warn('Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning')
+For this project I used several packages from the standard library and some external libraries. These included argparse, json, os, and sys. In addition, the external librarie fuzzywuzzy was imported for string comparisons. Due to fuzzywuzzy causing a warning (Using slow pure-python SequenceMatcher), python-Levenshtein was also added to the Pipfile.
 
 # Functions and Approach to Development
-* Train (or index for search) food data in provided dataset
-* Input ingredients and then use model (or search) to predict type of cuisine and return result
-** cuisine distance
-* Find the top-N closest foods. Return their IDs (if no ID associated can assign arbitrarily)
-** top-N and their distances
+This project takes specific ingredients from the command line and uses them to predict the cuisine of the food. In addition, by taking another variable, N, from the user, the N-closest recipes can be found. That is, the recipes that would take the fewest changes to switch to. This project was implemented with various functions, first by processing arguments.
 
-## Model vs. Search
-### First Approach: Indexed Search
-#### dictionary in dictionary
-#### Add in Fuzzy
-
-
-## Calculate distances
+After the arguments were processed, the yummly.json data was processed by using the json package. This data was then used to create weights for each ingredient per cuisine. These weights were then combined with the processed arguments to determine the likelihood of the igredients combining to be the various cuisines. In a similar manner, weights were found for the N-closest recipes by determing the number of insertions/deletions to get matching ingredient lists. Finally, the output was then stored in a dictionary and dumped out to stdout via json.dump.
 
 ## Functions
+### add_arguments()
+The arguments taken in are a list of ingredients and a number N for the N-closest foods. These arguments were added in the add_arguments() function via argparse.
+
+#### Argparse Flags
+* --"ingredient", type=str, required=True, action='append', help="Ingredients to predict type of cuisine and similar meals for.
+* "--N", type=int, required=True, help="Top-N closest foods."
+
+### load_json_file()
+This function takes a file_name, opens it, and processes it using the json package. This takes the JSON file and returns a dictionary that can be used.
+
+### fuzzy_ingred_match()
+This function takes a list of strings and an input string and compares them to try and find fuzzy matches. The list of strings and the input string are both composed of ingredient names. This function is used within other functions to find near matches while avoiding matches that are not close enough. This function makes use of the fuzzywuzzy package and in particular the token_sort_ratio function.
+
+The fuzzywuzzy package uses a ratio function to compute the standard Levenshtein distance between two different strings. However, the token_sort_ratio not only compares the distances in that manner, but also sorts the tokens alphabetically and joins them together. This function was selected after testing other fuzzywuzzy ratio results. 
+
+A threshold is then applied to the ratio result from fuzzywuzzy's token_set_ratio.  This threshold is a value of 75/100, which was determined via testing. Below are two example lists of strings, these lists were used to determine which fuzzywuzzy function to use as well as what threshold to use. Such a threshold allows banana to match bananas, rice krispies to match Rice Krispies Cereal, but does not allow banana to match banana peppers or peanut to match peanut butter.
+* strings1 = ["banana","banana","rice krispies","rice krispies","Rice Krispies Cereal", "peanut", "mint sauce", "pepper"]
+* strings2 = ["bananas", "banana peppers","Rice Krispies Cereal","crispy rice cereal","crispy rice cereal", "peanut butter", "marinara sauce","pepperoni"]
+
+However, one issue was found with these examples was that rice krispies matched Rice Krispies Cereal, but rice krispies did not match cripsy rice cereal. While these did not match, Rice Krispies Cereal did match cripsy rice cereal. Since these matched instead, the token_sort_ratio was applied twice. The first time, the function loops through the list of strings and compares those to the input string. Afterwards, any matches found with the first past are compared again to the list of strings to find any additional fuzzy matches.
+
+By looping through twice like this, many fuzzy matches were found while avoiding others that did not actually match.
+
+### count_changes_list()
+This function takes two lists and counts how many insertions or deletions would be needed to make the lists equivalent. This function is used in other functions that were created to help find the N-closest recipes. This is calculated by looping through the elements in both lists and adding up how many differences there are.
+
+### make_json_model()
+This function loops through each recipe in the yummly dataset and counts how many of each ingredient type there is. More specifically, how many of each ingredient exists for each cuisine type. By counting the number of ingredients, weights can then be assigned and added together to calculate the score of a specific set of ingredients passed in via the command line.
+
+### find_closest_cuisine()
+
+### find_N_foods()
 
 
 # Assumptions Made and Known Bugs
-## Known Bugs
-['puffed rice', 58] rice kripsies prob not gonna match puffed rice however puffed rice only shows up in indian recipes so not the cereal????
-    strings3 = ["vegetable stock","vegetable broth","vegetables","pickled vegetables","vegetable juice","vegetable oil spray","mixed vegetables",
-                  "root vegetables","vegetable slaw","vegetable bouillon","vegetable gumbo","other vegetables","vegetable soup"]
+Some ingredients I was unsure if they were technically fuzzy matches due to my cooking knowledge. For example, when finding how best to match rice krispies, rice krispies cereal, and crispy rice cereal, I found another ingredient called puffed rice. On investigation it turned out that the cuisines of all the recipes that contained puffed rice were Indian. It also appears based on google searches that puffed rice is different from rice krispies. However, there is no guarantee that there are some other ingredients in the model that will not fuzzy match to user input that should.
+
+There are no known bugs.
 
 # Tests
 Tests are performed with PyTest and local data. Tests are also set up with Github Actions and PyTest to run automatically when code is pushed to the repository. 
 
+make_json_model() is not tested as it is specified in the requirements that the model should be loaded and not created.
+
+## TEST THINGSSSSSSSSSSSSSS

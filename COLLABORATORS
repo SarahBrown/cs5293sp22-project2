@@ -1,9 +1,7 @@
 Pythonguides, https://pythonguides.com/json-data-in-python/, Python reference used to double check how to work with json files
-https://stackoverflow.com/questions/3930188/how-to-convert-nonetype-to-int-or-string
-https://www.tutorialsteacher.com/python/python-dictionary
-https://www.w3schools.com/python/python_dictionaries.asp
-https://stackoverflow.com/questions/5373474/multiple-positional-arguments-with-python-and-argparse
-https://www.datacamp.com/community/tutorials/fuzzy-string-python
-https://www.geeksforgeeks.org/json-dump-in-python/
-https://www.tutorialsteacher.com/articles/sort-dict-by-value-in-python
-https://www.geeksforgeeks.org/python-convert-json-to-string/
+Tutorialsteacher, https://www.tutorialsteacher.com/python/python-dictionary, Python reference used for dictionary information
+w3schools, https://www.w3schools.com/python/python_dictionaries.asp, Python reference used for dictionary information
+Stackoverflow, https://stackoverflow.com/questions/5373474/multiple-positional-arguments-with-python-and-argparse, Argparse reference for passing multiple of same flag
+Datacamp, https://www.datacamp.com/community/tutorials/fuzzy-string-python, Package reference for fuzzywuzzy and how to use it for string comparison
+Geeksforgeeks, https://www.geeksforgeeks.org/json-dump-in-python/, Python reference to dump json
+Tutorialsteacher, https://www.tutorialsteacher.com/articles/sort-dict-by-value-in-python, Python reference for sorting dictionaries

@@ -8,9 +8,9 @@ import sys
 from fuzzywuzzy import fuzz
 
 def add_arguments():
-    """Function to add and parse arguments."""
+    """Function to add and parse arguments from command line."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ingredient", type=str, required=True,action='append', 
+    parser.add_argument("--ingredient", type=str, required=True, action='append', 
                             help="Ingredients to predict type of cuisine and similar meals for.")
     parser.add_argument("--N", type=int, required=True,
                             help="Top-N closest foods.")
@@ -24,43 +24,6 @@ def load_json_file(file_name):
     json_file = open(file_name,'r')
     json_parsed = json.load(json_file)
     return json_parsed
-
-def make_json_model():
-    """Function to BLAH."""
-    # load yummly dataset
-    yummy_json = load_json_file('yummly.json')
-    num_recipes = len(yummy_json)
-
-    print("making model....")
-    ingredients = {}
-    for recipe in yummy_json:
-        rec_cuisine = recipe["cuisine"]
-        rec_ingredients = recipe["ingredients"]
-
-        for ingred in rec_ingredients:
-            # adds cuisine to cuisine dict if it was not in dict already
-            if ingred in ingredients.keys():
-                if rec_cuisine in ingredients[ingred]["cuisines_dict"].keys():
-                    ingredients[ingred]["cuisines_dict"][rec_cuisine] += 1
-                    ingredients[ingred]["total_ingred_count"] += 1
-                else:
-                    ingredients[ingred]["cuisines_dict"][rec_cuisine] = 1
-                    ingredients[ingred]["total_ingred_count"] = 1
-
-            else:            
-                ingredients[ingred] = {"cuisines_dict":{}, "total_ingred_count": 0} # dict for cuisines and set for fuzzy matches
-                ingredients[ingred]["cuisines_dict"][rec_cuisine] = 1
-                ingredients[ingred]["total_ingred_count"] = 1
-        
-    for ingred_key in ingredients.keys():
-        for cuisine_key in ingredients[ingred_key]["cuisines_dict"].keys():
-            weight = num_recipes*ingredients[ingred_key]["total_ingred_count"]
-            ingredients[ingred_key]["cuisines_dict"][cuisine_key] = ingredients[ingred_key]["cuisines_dict"][cuisine_key]/(weight)
-
-    print("saving model....")
-    out_file = open("model3.json", "w")
-    json.dump(ingredients, out_file, indent = 6)
-    out_file.close()
 
 def fuzzy_ingred_match(keys, input):
     """Function to compare a list of strings/keys to an input to find a fuzzy string match."""
@@ -80,7 +43,64 @@ def fuzzy_ingred_match(keys, input):
 
     return second_matches
 
-def find_closest_cuisine_ingreddict(args, json_model):
+def count_changes_lists(list1, list2):
+    """Compares changes needed to make list1 into list2"""
+    inserts = 0
+    deletes = 0
+
+    for list1_ele in list1:
+        if (list1_ele not in list2):
+            deletes += 1
+    
+    for list2_ele in list2:
+        if (list2_ele not in list1):
+            inserts += 1
+    
+    change = inserts+deletes
+    return(change)
+
+def make_json_model():
+    """Function to construct a searchable json model."""
+    # load yummly dataset
+    yummy_json = load_json_file('yummly.json')
+    num_recipes = len(yummy_json)
+
+    # makes model
+    ingredients = {}
+    for recipe in yummy_json:
+        # gets recipe's ingredients and cuisine data
+        rec_cuisine = recipe["cuisine"]
+        rec_ingredients = recipe["ingredients"]
+
+        # loops through ingredients in recipe and adds them to ingredient dictionary
+        for ingred in rec_ingredients:
+            # increments or inits ingredient count for cuisine and total ingredient if it is already in dictionary
+            if ingred in ingredients.keys():
+                if rec_cuisine in ingredients[ingred]["cuisines_dict"].keys():
+                    ingredients[ingred]["cuisines_dict"][rec_cuisine] += 1
+                    ingredients[ingred]["total_ingred_count"] += 1
+                else:
+                    ingredients[ingred]["cuisines_dict"][rec_cuisine] = 1
+                    ingredients[ingred]["total_ingred_count"] = 1
+
+            # adds ingredient and sets count to 1 if it was not already in dictionary
+            else:            
+                ingredients[ingred] = {"cuisines_dict":{}, "total_ingred_count": 0} # dict for cuisines and set for fuzzy matches
+                ingredients[ingred]["cuisines_dict"][rec_cuisine] = 1
+                ingredients[ingred]["total_ingred_count"] = 1
+        
+    # changes values to be weighted values by dividing by the total number of times ingrident shows up
+    for ingred_key in ingredients.keys():
+        for cuisine_key in ingredients[ingred_key]["cuisines_dict"].keys():
+            weight = num_recipes*ingredients[ingred_key]["total_ingred_count"]
+            ingredients[ingred_key]["cuisines_dict"][cuisine_key] = ingredients[ingred_key]["cuisines_dict"][cuisine_key]/(weight)
+
+    # outputs model
+    out_file = open("model.json", "w")
+    json.dump(ingredients, out_file, indent = 6)
+    out_file.close()
+
+def find_closest_cuisine(args, json_model):
     input_ingred = args.ingredient
     cuisine_scores = {}
 
@@ -113,7 +133,6 @@ def find_closest_cuisine_ingreddict(args, json_model):
     # sort by score
     scores_list = sorted(cuisine_scores.items(), key=lambda x:x[1], reverse=True) # sorted by score, highest to lowest
     return (scores_list[0]) # returns top score
-
 
 def find_N_foods(args, json_model):
     input_ingred = args.ingredient
@@ -155,21 +174,6 @@ def find_N_foods(args, json_model):
         output.append({"id":close[0], "score": close[1]})
     return output
             
-def count_changes_lists(list1, list2):
-    """Compares changes needed to make list1 into list2"""
-    inserts = 0
-    deletes = 0
-
-    for list1_ele in list1:
-        if (list1_ele not in list2):
-            deletes += 1
-    
-    for list2_ele in list2:
-        if (list2_ele not in list1):
-            inserts += 1
-    
-    change = inserts+deletes
-    return(change)
 """Uses search to predict cuisine and find N-closest foods"""
 # gets arguments passed in via argparse
 args = add_arguments()
@@ -178,10 +182,10 @@ args = add_arguments()
 # make_json_model() # commented out when not making model (e.g. for turning in project)
 
 # load indexed search stored in jsons
-json_model = load_json_file('model3.json')
+json_model = load_json_file('model.json')
 
 # find closest cuisine
-cuisine = find_closest_cuisine_ingreddict(args, json_model)
+cuisine = find_closest_cuisine(args, json_model)
 # find closest N foods
 closest_N = find_N_foods(args, json_model)
 # format output
