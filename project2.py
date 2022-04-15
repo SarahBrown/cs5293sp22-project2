@@ -21,9 +21,12 @@ def add_arguments():
 
 def load_json_file(file_name):
     """Function to open and convert json dataset."""
-    json_file = open(file_name,'r')
-    json_parsed = json.load(json_file)
-    return json_parsed
+    try:
+        json_file = open(file_name,'r')
+        json_parsed = json.load(json_file)
+        return json_parsed
+    except IOError:
+        return None
 
 def fuzzy_ingred_match(keys, input):
     """Function to compare a list of strings/keys to an input to find a fuzzy string match."""
@@ -100,8 +103,7 @@ def make_json_model():
     json.dump(ingredients, out_file, indent = 6)
     out_file.close()
 
-def find_closest_cuisine(args, json_model):
-    input_ingred = args.ingredient
+def find_closest_cuisine(input_ingred, json_model):
     cuisine_scores = {} # dictionary for cuisine scores
 
     # loop through each ingredient entered via arguments
@@ -138,10 +140,8 @@ def find_closest_cuisine(args, json_model):
     scores_list = sorted(cuisine_scores.items(), key=lambda x:x[1], reverse=True) # sorted by score, highest to lowest
     return (scores_list[0]) # returns top score
 
-def find_N_foods(args, json_model):
-    input_ingred = args.ingredient
+def find_N_foods(N, input_ingred, json_model):
     yummy_json = load_json_file('yummly.json')
-    N = args.N
     closest_N = []
     output = []
 
@@ -182,21 +182,25 @@ def find_N_foods(args, json_model):
         output.append({"id":close[0], "score": close[1]})
     return output
             
-"""Uses search to predict cuisine and find N-closest foods"""
-# gets arguments passed in via argparse
-args = add_arguments()
+def main():
+    """Uses search to predict cuisine and find N-closest foods"""
+    # gets arguments passed in via argparse
+    args = add_arguments()
 
-# # creates indexed search for searching
-# make_json_model() # commented out when not making model (e.g. for turning in project)
+    # # creates indexed search for searching
+    # make_json_model() # commented out when not making model (e.g. for turning in project)
 
-# load indexed search stored in jsons
-json_model = load_json_file('model.json')
+    # load indexed search stored in jsons
+    json_model = load_json_file('model.json')
 
-# find closest cuisine
-cuisine = find_closest_cuisine(args, json_model)
-# find closest N foods
-closest_N = find_N_foods(args, json_model)
-# format output
-output_dict = {"cuisine": cuisine[0],"score": cuisine[1], "closest": closest_N}
-# dump output to stdout 
-json.dump(output_dict, sys.stdout, indent = 2)
+    # find closest cuisine
+    cuisine = find_closest_cuisine(args.ingredient, json_model)
+    # find closest N foods
+    closest_N = find_N_foods(args.N, args.ingredient, json_model)
+    # format output
+    output_dict = {"cuisine": cuisine[0],"score": cuisine[1], "closest": closest_N}
+    # dump output to stdout 
+    json.dump(output_dict, sys.stdout, indent = 2)
+
+if __name__ == "__main__":
+    main()
